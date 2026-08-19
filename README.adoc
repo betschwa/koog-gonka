@@ -2,6 +2,7 @@
 
 image::docs/images/banner.jpg[koog-gonka — Decentralized LLM Provider for Koog]
 
+image:https://github.com/betschwa/koog-gonka/actions/workflows/ci.yml/badge.svg[CI,link=https://github.com/betschwa/koog-gonka/actions/workflows/ci.yml]
 image:https://img.shields.io/badge/Kotlin-2.3.10-7F52FF.svg?logo=kotlin&logoColor=white[Kotlin 2.3.10,link=https://kotlinlang.org]
 image:https://img.shields.io/badge/JDK-17+-ED8B00.svg?logo=openjdk&logoColor=white[Java 17+,link=https://adoptium.net]
 image:https://img.shields.io/github/license/betschwa/koog-gonka[Apache 2.0,link=https://github.com/betschwa/koog-gonka/blob/master/LICENSE]
