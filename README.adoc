@@ -37,7 +37,67 @@ dependencies {
 }
 ----
 
-Not yet published to Maven Central.
+Not yet published to Maven Central — see <<publishing,Publishing>> below for what's
+still needed before the first tag.
+
+== Publishing to Maven Central
+
+[[publishing]]
+`koog-gonka` publishes to Maven Central (only channel — no Homebrew, no other
+distribution) via the
+https://github.com/vanniktech/gradle-maven-publish-plugin[vanniktech maven-publish
+plugin] and the `.github/workflows/release.yml` workflow, triggered by pushing a
+`vX.Y.Z` tag.
+
+=== Already done
+
+* Sonatype Central Portal namespace `de.betchvaia` is verified (DNS TXT record at
+  netcup) — no further namespace setup needed.
+* `build.gradle.kts` (root) configures coordinates, POM metadata, and
+  `publishToMavenCentral(automaticRelease = true)` for every `org.jetbrains.kotlin.jvm`
+  subproject.
+* `./gradlew publishToMavenLocal` works with no credentials — a safe way to verify the
+  publication shape (POM, sources jar, empty javadoc jar) before touching real
+  credentials.
+
+=== Still needed (one-time, manual — not something an agent should do)
+
+. *Sonatype user token*: on
+  https://central.sonatype.com[central.sonatype.com], under the `de.betchvaia`
+  namespace, generate a user token (not your login password). Two values come out of
+  this: a username and a password.
+. *GPG signing key*:
++
+[source,bash]
+----
+gpg --quick-generate-key "koog-gonka Release <irakli@betchvaia.de>" rsa4096 sign 0
+gpg --list-secret-keys --keyid-format=long
+# note the key id, e.g. ABC1234567890DEF
+
+gpg --armor --export-secret-keys ABC1234567890DEF > koog-gonka-signing-key.asc
+gpg --keyserver keyserver.ubuntu.com --send-keys ABC1234567890DEF
+----
+. *GitHub Secrets* (repo Settings → Secrets and variables → Actions):
++
+[cols="1,2"]
+|===
+| Secret | Value
+
+| `SONATYPE_USERNAME` | Sonatype user-token username (step 1)
+| `SONATYPE_PASSWORD` | Sonatype user-token password (step 1)
+| `GPG_SIGNING_KEY` | Contents of `koog-gonka-signing-key.asc` (full ASCII-armored block, step 2)
+| `GPG_PASSPHRASE` | Passphrase for the GPG key (empty string if none)
+|===
+
+Once those four secrets exist, pushing a `vX.Y.Z` tag runs the release workflow
+end-to-end: build & test, publish to Maven Central (skipped idempotently if that
+version is already live), create the GitHub Release.
+
+A maintainer can also publish a real (non-SNAPSHOT) version from a local machine
+without CI, by setting the same four values as Gradle properties
+(`~/.gradle/gradle.properties` or `-P`/`ORG_GRADLE_PROJECT_*` env vars, matching the
+names `mavenCentralUsername` / `mavenCentralPassword` / `signingInMemoryKey` /
+`signingInMemoryKeyPassword`) and running `./gradlew publishToMavenCentral`.
 
 == Maintenance
 

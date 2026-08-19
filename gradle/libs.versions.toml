@@ -16,6 +16,7 @@ logback = "1.5.16"
 kotest = "5.9.1"
 acinq-secp256k1 = "0.16.0"
 bouncycastle = "1.85.2"
+vanniktech-publish = "0.37.0"
 
 [libraries]
 koog-agents-jvm = { module = "ai.koog:koog-agents-jvm", version.ref = "koog" }
@@ -45,3 +46,4 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }

@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build & check
+        run: ./gradlew clean check
+
+      # Maven Central is immutable, so a re-run of a tag that already fully published
+      # (e.g. a workflow retry after an unrelated later step failed) must not attempt
+      # publishToMavenCentral again — it would fail loudly for no reason. Pattern
+      # mirrors kUML's release.yml (kuml-dev/kUML), simplified to this repo's single
+      # published module.
+      - name: Check if already on Maven Central
+        id: mc_check
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          POM_URL="https://repo1.maven.org/maven2/de/betchvaia/koog-gonka/${VERSION}/koog-gonka-${VERSION}.pom"
+          HTTP_STATUS=$(curl -sI -o /dev/null -w "%{http_code}" "$POM_URL")
+          echo "Maven Central probe: $POM_URL → HTTP $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "already_published=true" >> $GITHUB_OUTPUT
+            echo "::notice::v${VERSION} already on Maven Central — skipping publishToMavenCentral"
+          else
+            echo "already_published=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to Maven Central
+        if: steps.mc_check.outputs.already_published != 'true'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
+
+      # GitHub Release is create-or-update, not fail-if-exists, so a re-run (e.g. after
+      # fixing an unrelated step) doesn't fail on "release already exists".
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
+          else
+            gh release create "$TAG" --repo "${{ github.repository }}" \
+              --title "$TAG" --generate-notes
+          fi
