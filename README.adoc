@@ -38,6 +38,37 @@ dependencies {
 
 Not yet published to Maven Central.
 
+== Maintenance
+
+=== Keeping in sync with Koog
+
+`koog-gonka`'s Kotlin and JDK versions are deliberately pinned to match Koog's
+own build *exactly*, not just "compatible" — see <<why-exact-versions,rationale>>
+below. Whenever the `koog` version in `gradle/libs.versions.toml` is bumped:
+
+. Check Koog's own `gradle/libs.versions.toml` and
+  `convention-plugin-ai/src/main/kotlin/ai.kotlin.configuration.gradle.kts`
+  (in https://github.com/JetBrains/koog[JetBrains/koog], on the matching release
+  tag) for its `kotlin`, `jdkVersion`, and `jvmTarget` values.
+. Update `kotlin` in `gradle/libs.versions.toml` to match.
+. Update `jvmToolchain(...)` in `koog-gonka/build.gradle.kts` to match Koog's
+  JVM target / JDK toolchain.
+. Check whether Koog's `ktor`, `kotlinx-coroutines`, and `kotlinx-serialization`
+  versions have also moved, and whether `koog-gonka`'s own pins should follow —
+  `GonkaLLMClient` exposes `ktor-client-core` types on its public constructor, so
+  a stale pin there is the most likely of the three to actually break something.
+. Run `./gradlew clean check`, and verify with `--info` that compilation actually
+  uses the intended JDK (`... --info 2>&1 | grep -i jdkHome`).
+. Update the Kotlin/JDK badges at the top of this README.
+
+[[why-exact-versions]]
+*Rationale:* `GonkaLLMClient` extends Koog's `@ApiStatus.Experimental`-marked
+internals (`AbstractOpenAILLMClient`, `KtorKoogHttpClient`) rather than only
+stable public API. Kotlin's forward-compatibility guarantees make a
+newer-Kotlin-than-Koog setup work in practice (verified once, see git history),
+but exact version parity removes that residual risk entirely for code sitting
+this close to Koog's unstable internals.
+
 == License
 
 Apache License 2.0 — see link:LICENSE[].

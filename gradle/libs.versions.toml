@@ -1,3 +1,10 @@
+# NOTE: `kotlin` (and koog-gonka/build.gradle.kts's jvmToolchain(...)) are kept in
+# exact sync with Koog's own build, not just "compatible" — see the "Maintenance"
+# section in README.adoc for why and for the checklist to follow whenever `koog`
+# below is bumped: re-check Koog's own gradle/libs.versions.toml +
+# ai.kotlin.configuration.gradle.kts (in JetBrains/koog, on the matching tag) for
+# its kotlin/jdkVersion/jvmTarget, and consider ktor/kotlinx-coroutines/
+# kotlinx-serialization too.
 [versions]
 kotlin = "2.3.10"
 koog = "1.0.0"
