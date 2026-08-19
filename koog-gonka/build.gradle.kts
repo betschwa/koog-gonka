@@ -38,6 +38,23 @@ dependencies {
     implementation(libs.kotlin.logging)
     testRuntimeOnly(libs.logback.classic)
 
+    // secp256k1 for GonkaAuth.Wallet: JNI bindings to Bitcoin Core's libsecp256k1, the same
+    // reference implementation Gonka's own Go signer wraps (devshard/signing/secp256k1.go,
+    // github.com/gonka-ai/gonka, via go-ethereum's crypto package). Only used inside the
+    // wallet package, never in a public signature -> implementation. Two artifacts needed:
+    // -jvm has the actual Kotlin classes (Secp256k1 interface + wrapper), -jni-jvm bundles
+    // the per-OS native libsecp256k1 binaries it loads at runtime. Pinned to 0.16.0, not the
+    // newest release: 0.17.0+ declares a minimum JVM target of 21 via Gradle module
+    // metadata, incompatible with this module's jvmToolchain(17); 0.16.0 is the newest
+    // release still built for JVM 17. Bump this alongside jvmToolchain if that ever changes.
+    implementation(libs.acinq.secp256k1.jvm)
+    implementation(libs.acinq.secp256k1.jni.jvm)
+
+    // RIPEMD160 for gonka1... address derivation (sha256 -> ripemd160 -> bech32, matching
+    // Gonka's own scheme). The JDK's default JCE providers don't ship RIPEMD160. Only used
+    // inside GonkaSigner -> implementation.
+    implementation(libs.bouncycastle.bcprov)
+
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotlinx.coroutines.test)

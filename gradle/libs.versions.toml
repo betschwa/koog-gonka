@@ -14,6 +14,8 @@ ktor = "3.0.3"
 kotlin-logging = "7.0.4"
 logback = "1.5.16"
 kotest = "5.9.1"
+acinq-secp256k1 = "0.16.0"
+bouncycastle = "1.85.2"
 
 [libraries]
 koog-agents-jvm = { module = "ai.koog:koog-agents-jvm", version.ref = "koog" }
@@ -31,6 +33,10 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+acinq-secp256k1-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jvm", version.ref = "acinq-secp256k1" }
+acinq-secp256k1-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "acinq-secp256k1" }
+bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
