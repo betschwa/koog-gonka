@@ -10,7 +10,8 @@ kotest = "5.9.1"
 
 [libraries]
 koog-agents-jvm = { module = "ai.koog:koog-agents-jvm", version.ref = "koog" }
-koog-prompt-executor-openai-client = { module = "ai.koog:prompt-executor-openai-client", version.ref = "koog" }
+koog-prompt-executor-openai-client-base = { module = "ai.koog:prompt-executor-openai-client-base", version.ref = "koog" }
+koog-http-client-ktor = { module = "ai.koog:http-client-ktor", version.ref = "koog" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -19,6 +20,7 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
