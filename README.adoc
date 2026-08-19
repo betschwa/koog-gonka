@@ -3,7 +3,7 @@
 image::docs/images/banner.jpg[koog-gonka — Decentralized LLM Provider for Koog]
 
 image:https://img.shields.io/badge/Kotlin-2.4.0-7F52FF.svg?logo=kotlin&logoColor=white[Kotlin 2.4.0,link=https://kotlinlang.org]
-image:https://img.shields.io/badge/JDK-25-ED8B00.svg?logo=openjdk&logoColor=white[JDK 25,link=https://adoptium.net]
+image:https://img.shields.io/badge/JDK-21+-ED8B00.svg?logo=openjdk&logoColor=white[Java 21+,link=https://adoptium.net]
 image:https://img.shields.io/github/license/betschwa/koog-gonka[Apache 2.0,link=https://github.com/betschwa/koog-gonka/blob/master/LICENSE]
 
 A https://docs.koog.ai/[Koog] `LLMClient` implementation for
