@@ -25,15 +25,24 @@ public sealed interface GonkaAuth {
      * (e.g. `logger.debug { "$auth" }`). [toString] is hand-written to print only [address]
      * and [nodeUrl].
      *
+     * [AutoCloseable]: [close] best-effort zeroes the retained key material (see
+     * [GonkaSigner.close] for the exact guarantee and its limits). A caller holding a
+     * [Wallet] directly should call [close] once the key is no longer needed.
+     * [de.betchvaia.koog.gonka.wallet.GonkaWalletLLMClient] takes ownership of the [Wallet]
+     * passed to its constructor and forwards its own `close()` to this one — same pattern as
+     * [de.betchvaia.koog.gonka.GonkaLLMClient] owning and closing the ktor `HttpClient`
+     * passed (or default-constructed) into it.
+     *
      * SECURITY: [privateKeyHex] is consumed once by the constructor to derive this object's
      * key material; the string itself is not retained by this class. Key material derived
-     * from it IS retained internally for this object's lifetime (needed to sign future
+     * from it IS retained internally until [close] is called (needed to sign future
      * requests) — never logged, never surfaced in [toString] or in any exception message
      * this class or [GonkaSigner] throws. The JVM offers no hard guarantee of clearing it
      * from memory (immutable `String`s may be interned; JIT/GC-retained copies and the
      * JNI-backed secp256k1 library's own internal copies are outside this class's control)
      * — callers should treat [privateKeyHex] itself as sensitive for its own lifecycle
-     * (don't log it before passing it in, don't keep extra references around).
+     * (don't log it before passing it in, don't keep extra references around), and should
+     * call [close] rather than relying solely on GC.
      *
      * @param privateKeyHex 32-byte secp256k1 private key, lowercase or uppercase hex, with
      *   or without a `0x` prefix, exactly 64 hex digits. Matches the format
@@ -48,7 +57,7 @@ public sealed interface GonkaAuth {
      *   see [GonkaSigner.fromPrivateKeyHex]. Also thrown if [nodeUrl] is blank. Neither the
      *   invalid hex value nor any prefix/suffix of it appears in the exception message.
      */
-    public class Wallet(privateKeyHex: String, public val nodeUrl: String) : GonkaAuth {
+    public class Wallet(privateKeyHex: String, public val nodeUrl: String) : GonkaAuth, AutoCloseable {
 
         init {
             require(nodeUrl.isNotBlank()) { "GonkaAuth.Wallet: nodeUrl must not be blank" }
@@ -61,6 +70,11 @@ public sealed interface GonkaAuth {
 
         /** The 33-byte compressed secp256k1 public key, hex-encoded. */
         public val compressedPublicKeyHex: String get() = signer.compressedPublicKeyHex
+
+        /** Best-effort zeroes the retained key material. See this class's KDoc for the guarantee's limits. */
+        override fun close() {
+            signer.close()
+        }
 
         override fun toString(): String = "GonkaAuth.Wallet(address=$address, nodeUrl=$nodeUrl)"
 

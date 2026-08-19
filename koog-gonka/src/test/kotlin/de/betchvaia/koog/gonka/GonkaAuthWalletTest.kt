@@ -56,6 +56,12 @@ class GonkaAuthWalletTest : StringSpec({
         (a == b) shouldBe false
     }
 
+    "close does not throw and is idempotent when called twice" {
+        val wallet = GonkaAuth.Wallet(privateKeyHex = TOY_PRIVATE_KEY_HEX, nodeUrl = "http://node.test:8000")
+        wallet.close()
+        wallet.close()
+    }
+
     "GonkaAuth.ApiKey still compiles and behaves unchanged" {
         val apiKey = GonkaAuth.ApiKey(apiKey = "test-key")
         apiKey.apiKey shouldBe "test-key"

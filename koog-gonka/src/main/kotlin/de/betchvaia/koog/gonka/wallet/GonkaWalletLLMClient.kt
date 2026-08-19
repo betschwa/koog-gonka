@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.Flow
  * API shape, not a drop-in replacement for
  * [ai.koog.prompt.executor.clients.openai.base.AbstractOpenAILLMClient].
  */
-public class GonkaWalletLLMClient(auth: GonkaAuth.Wallet) : LLMClient() {
+public class GonkaWalletLLMClient(private val auth: GonkaAuth.Wallet) : LLMClient() {
 
     /** The `gonka1...` bech32 address derived from [auth]'s wallet key. */
     public val address: String = auth.address
@@ -56,8 +56,14 @@ public class GonkaWalletLLMClient(auth: GonkaAuth.Wallet) : LLMClient() {
 
     override fun llmProvider(): LLMProvider = GonkaLLMProvider
 
-    /** Nothing is owned yet (no HTTP client, no session) — nothing to close. */
-    override fun close() {}
+    /**
+     * Closes [auth], best-effort zeroing its retained private-key material (see
+     * [GonkaAuth.Wallet]'s KDoc for the guarantee's limits). No HTTP client or session
+     * exists yet to close in this wave — the key material is the only thing this class owns.
+     */
+    override fun close() {
+        auth.close()
+    }
 
     private fun notImplemented(): Nothing = throw UnsupportedOperationException(
         "GonkaWalletLLMClient does not yet dispatch inference requests over Gonka's devshard " +

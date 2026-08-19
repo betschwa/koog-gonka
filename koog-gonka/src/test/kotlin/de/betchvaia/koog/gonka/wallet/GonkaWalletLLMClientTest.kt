@@ -74,8 +74,9 @@ class GonkaWalletLLMClientTest : StringSpec({
         client.close()
     }
 
-    "close does not throw" {
+    "close does not throw and is idempotent when called twice" {
         val client = GonkaWalletLLMClient(testWalletAuth())
+        client.close()
         client.close()
     }
 })
