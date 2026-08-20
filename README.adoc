@@ -3,6 +3,7 @@
 image::docs/images/banner.jpg[koog-gonka — Decentralized LLM Provider for Koog]
 
 image:https://github.com/betschwa/koog-gonka/actions/workflows/ci.yml/badge.svg[CI,link=https://github.com/betschwa/koog-gonka/actions/workflows/ci.yml]
+image:https://img.shields.io/maven-central/v/de.betchvaia/koog-gonka.svg[Maven Central,link=https://central.sonatype.com/artifact/de.betchvaia/koog-gonka]
 image:https://img.shields.io/badge/Kotlin-2.3.10-7F52FF.svg?logo=kotlin&logoColor=white[Kotlin 2.3.10,link=https://kotlinlang.org]
 image:https://img.shields.io/badge/JDK-17+-ED8B00.svg?logo=openjdk&logoColor=white[Java 17+,link=https://adoptium.net]
 image:https://img.shields.io/github/license/betschwa/koog-gonka[Apache 2.0,link=https://github.com/betschwa/koog-gonka/blob/master/LICENSE]
@@ -17,28 +18,35 @@ Ollama — through Koog's standard `LLMClient` abstraction.
 
 == Status
 
-Early development. No release yet.
+Released. `v0.1.0` is on Maven Central — `GonkaLLMClient` (Broker API-key auth) is
+fully functional; `GonkaAuth.Wallet` (secp256k1 signing primitives) is implemented
+but its dispatch path is deliberately stubbed, see <<authentication,Authentication>>.
 
+[[authentication]]
 == Authentication
 
-Two auth modes are planned, both behind the same client interface:
+Two auth modes, both behind the same `GonkaAuth` interface:
 
-* *API key via Gonka Broker* (first wave) — OpenAI-compatible endpoint,
-  classic USD card billing, no wallet required.
-* *Wallet-based direct chain access* (later wave) — secp256k1 request
-  signing against the Gonka chain, no centralized broker layer.
+* *API key via Gonka Broker* (`GonkaAuth.ApiKey`) — OpenAI-compatible endpoint,
+  classic USD card billing, no wallet required. `GonkaLLMClient` fully implements
+  dispatch against it.
+* *Wallet-based direct chain access* (`GonkaAuth.Wallet`) — secp256k1 identity and
+  request-signing primitives are implemented and tested, ported directly from
+  Gonka's own Go source. `GonkaWalletLLMClient`'s actual dispatch is deliberately
+  NOT implemented yet: Gonka's own `devshard/bridge` chain-bridge interface is
+  marked "Phase 1: interface only, no implementation" upstream, and broker-less
+  wallet signing does not work end-to-end on the network today (see that class's
+  KDoc for citations). Calling `execute`/`executeStreaming`/`moderate` on it throws
+  `UnsupportedOperationException` with an explanation.
 
 == Coordinates
 
 [source,kotlin]
 ----
 dependencies {
-    implementation("de.betchvaia:koog-gonka:<version>")
+    implementation("de.betchvaia:koog-gonka:0.1.0")
 }
 ----
-
-Not yet published to Maven Central — see <<publishing,Publishing>> below for what's
-still needed before the first tag.
 
 == Publishing to Maven Central
 
@@ -49,55 +57,46 @@ https://github.com/vanniktech/gradle-maven-publish-plugin[vanniktech maven-publi
 plugin] and the `.github/workflows/release.yml` workflow, triggered by pushing a
 `vX.Y.Z` tag.
 
-=== Already done
+=== One-time setup (completed 2026-08-20)
 
-* Sonatype Central Portal namespace `de.betchvaia` is verified (DNS TXT record at
-  netcup) — no further namespace setup needed.
+* Sonatype Central Portal namespace `de.betchvaia` verified (DNS TXT record at
+  netcup).
 * `build.gradle.kts` (root) configures coordinates, POM metadata, and
   `publishToMavenCentral(automaticRelease = true)` for every `org.jetbrains.kotlin.jvm`
   subproject.
-* `./gradlew publishToMavenLocal` works with no credentials — a safe way to verify the
-  publication shape (POM, sources jar, empty javadoc jar) before touching real
-  credentials.
+* Sonatype user token, GPG signing key, and the four GitHub Secrets below are set.
+  `.github/workflows/release.yml` runs the `publish` job with `permissions: contents:
+  write` at the job level (the repo's default workflow permissions are read-only,
+  which broke GitHub Release creation on the first attempt — see git history for
+  `v0.1.0`).
 
-=== Still needed (one-time, manual — not something an agent should do)
-
-. *Sonatype user token*: on
-  https://central.sonatype.com[central.sonatype.com], under the `de.betchvaia`
-  namespace, generate a user token (not your login password). Two values come out of
-  this: a username and a password.
-. *GPG signing key*:
-+
-[source,bash]
-----
-gpg --quick-generate-key "koog-gonka Release <irakli@betchvaia.de>" rsa4096 sign 0
-gpg --list-secret-keys --keyid-format=long
-# note the key id, e.g. ABC1234567890DEF
-
-gpg --armor --export-secret-keys ABC1234567890DEF > koog-gonka-signing-key.asc
-gpg --keyserver keyserver.ubuntu.com --send-keys ABC1234567890DEF
-----
-. *GitHub Secrets* (repo Settings → Secrets and variables → Actions):
-+
 [cols="1,2"]
 |===
 | Secret | Value
 
-| `SONATYPE_USERNAME` | Sonatype user-token username (step 1)
-| `SONATYPE_PASSWORD` | Sonatype user-token password (step 1)
-| `GPG_SIGNING_KEY` | Contents of `koog-gonka-signing-key.asc` (full ASCII-armored block, step 2)
+| `SONATYPE_USERNAME` | Sonatype user-token username
+| `SONATYPE_PASSWORD` | Sonatype user-token password
+| `GPG_SIGNING_KEY` | ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key-id>`)
 | `GPG_PASSPHRASE` | Passphrase for the GPG key (empty string if none)
 |===
 
-Once those four secrets exist, pushing a `vX.Y.Z` tag runs the release workflow
-end-to-end: build & test, publish to Maven Central (skipped idempotently if that
-version is already live), create the GitHub Release.
+=== Cutting a release
 
-A maintainer can also publish a real (non-SNAPSHOT) version from a local machine
-without CI, by setting the same four values as Gradle properties
-(`~/.gradle/gradle.properties` or `-P`/`ORG_GRADLE_PROJECT_*` env vars, matching the
-names `mavenCentralUsername` / `mavenCentralPassword` / `signingInMemoryKey` /
-`signingInMemoryKeyPassword`) and running `./gradlew publishToMavenCentral`.
+. Bump `version` in `build.gradle.kts` (root) to a non-SNAPSHOT version.
+. Commit and push to `master`.
+. `git tag -a vX.Y.Z -m "..."` and `git push origin vX.Y.Z`.
+
+The release workflow then runs end-to-end: build & test, publish to Maven Central
+(skipped idempotently if that version is already live — Central is immutable), create
+the GitHub Release. CDN propagation to `repo1.maven.org` after a successful
+`publishToMavenCentral` can take anywhere from a few minutes to ~30 minutes for a new
+version.
+
+A maintainer can also publish from a local machine without CI, by setting the same
+four values as Gradle properties (`~/.gradle/gradle.properties` or
+`-P`/`ORG_GRADLE_PROJECT_*` env vars, matching the names `mavenCentralUsername` /
+`mavenCentralPassword` / `signingInMemoryKey` / `signingInMemoryKeyPassword`) and
+running `./gradlew publishToMavenCentral`.
 
 == Maintenance
 
