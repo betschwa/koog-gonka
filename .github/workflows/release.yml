@@ -9,6 +9,12 @@ jobs:
   publish:
     name: Publish to Maven Central
     runs-on: ubuntu-latest
+    # Default workflow permissions on this repo are read-only; the "Create or update
+    # GitHub Release" step needs write access to create releases via the gh CLI
+    # (verified failure 2026-08-20: HTTP 403 "Resource not accessible by integration"
+    # on the v0.1.0 run without this). Scoped to just this job, not the whole repo.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
