@@ -11,7 +11,7 @@ plugins {
 
 allprojects {
     group = "de.betchvaia"
-    version = "0.1.0-SNAPSHOT"
+    version = "0.1.0"
 }
 
 // Single JVM module today (koog-gonka only) — kept as a subprojects{} block, not
